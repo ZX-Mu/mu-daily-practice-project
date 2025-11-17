@@ -1,20 +1,41 @@
 import "./App.css";
-import {useState} from "react";
+import {useEffect, useState} from "react";
+
+
+const timeFormat = (date: string) => {
+    const timeDiff = new Date().getTime() - new Date(date).getTime();
+    const minuteDiff = Math.floor(timeDiff / (60 * 1000));
+    const hourDiff = Math.floor(timeDiff / (3600 * 1000));
+    const dayDiff = Math.floor(timeDiff / (24 * 3600 * 1000));
+    const mouthDiff = Math.floor(timeDiff / (30 * 24 * 3600 * 1000));
+    let result = "刚刚";
+    if (mouthDiff > 0) {
+        result = `${mouthDiff}月前`
+    } else if (dayDiff > 0) {
+        result = `${dayDiff}天前`
+    } else if (hourDiff > 0) {
+        result = `${hourDiff}小时前`
+    } else if (minuteDiff > 0) {
+        result = `${minuteDiff}分钟前`
+    }
+
+    return result
+}
 
 function App() {
     const [todoTasks, setTodoTasks] = useState([
-        {name: "任务一", date: "2025-01-01"},
-        {name: "任务二", date: "2025-01-02"},
-        {name: "任务三", date: "2025-01-03"},
+        {name: "任务一", date: "2025-11-12 20:10"},
+        {name: "任务二", date: "2025-11-11 18:00"},
+        {name: "任务三", date: "2025-11-10 19:00"},
     ]);
     const [doingTasks, setDoingTasks] = useState([
-        {name: "任务四", date: "2025-01-04"},
-        {name: "任务五", date: "2025-01-05"},
-        {name: "任务六", date: "2025-01-06"},
+        {name: "任务四", date: "2025-10-30 12:00"},
+        {name: "任务五", date: "2025-11-05 18:00"},
+        {name: "任务六", date: "2025-11-11 19:00"},
     ]);
     const [doneTasks, setDoneTasks] = useState([
-        {name: "任务七", date: "2025-01-07"},
-        {name: "任务八", date: "2025-01-08"},
+        {name: "任务七", date: "2025-09-07 14:23"},
+        {name: "任务八", date: "2025-10-09 19:36"},
     ]);
 
     interface Task {
@@ -22,12 +43,21 @@ function App() {
         date: string;
     }
 
-    const RenderKanbanItemList = ({task}: { task: Task }) => (
-        <div key={task.name} className="kanban-item">
-            <div className="kanban-item-name">{task.name}</div>
-            <div className="kanban-item-date">{task.date}</div>
-        </div>
-    );
+    const RenderKanbanItemList = ({task}: { task: Task }) => {
+        const [displayTime, setDisplayTime] = useState(timeFormat(task.date));
+        useEffect(() => {
+            const timer = setInterval(() => {
+                setDisplayTime(timeFormat(task.date));
+            }, 1000*60);
+            return () => clearInterval(timer);
+        }, [task.date]);
+        return (
+            <div key={task.name} className="kanban-item">
+                <div className="kanban-item-name">{task.name}</div>
+                <div className="kanban-item-date">{displayTime}</div>
+            </div>
+        )
+    };
 
     const RenderKanbanColumn = ({title, addTask, className, children}: {
         title: string,
@@ -36,20 +66,20 @@ function App() {
         children: React.ReactNode
     }) => {
         return (
-        <div className={`app-main-kanban ${className}`}>
-            <div className="kanban-title">
-                <span>{title}</span>
-                <button
-                    className="kanban-add-btn"
-                    onClick={addTask}
-                >
-                    添加任务
-                </button>
-            </div>
-            <div className="kanban-item-list">
-                {children}
-            </div>
-        </div>)
+            <div className={`app-main-kanban ${className}`}>
+                <div className="kanban-title">
+                    <span>{title}</span>
+                    <button
+                        className="kanban-add-btn"
+                        onClick={addTask}
+                    >
+                        添加任务
+                    </button>
+                </div>
+                <div className="kanban-item-list">
+                    {children}
+                </div>
+            </div>)
     }
 
     const RenderKanbanAddCard = ({onAdd}: { onAdd: (task: Task) => void }) => {
