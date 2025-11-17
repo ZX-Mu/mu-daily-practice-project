@@ -1,5 +1,5 @@
 import "./App.css";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 
 
 const timeFormat = (date: string) => {
@@ -23,32 +23,32 @@ const timeFormat = (date: string) => {
 }
 
 function App() {
-    const [todoTasks, setTodoTasks] = useState([
+    const [todoTasks, setTodoTasks] = useState<TaskItem[]>([
         {name: "任务一", date: "2025-11-12 20:10"},
         {name: "任务二", date: "2025-11-11 18:00"},
         {name: "任务三", date: "2025-11-10 19:00"},
     ]);
-    const [doingTasks, setDoingTasks] = useState([
+    const [doingTasks, setDoingTasks] = useState<TaskItem[]>([
         {name: "任务四", date: "2025-10-30 12:00"},
         {name: "任务五", date: "2025-11-05 18:00"},
         {name: "任务六", date: "2025-11-11 19:00"},
     ]);
-    const [doneTasks, setDoneTasks] = useState([
+    const [doneTasks, setDoneTasks] = useState<TaskItem[]>([
         {name: "任务七", date: "2025-09-07 14:23"},
         {name: "任务八", date: "2025-10-09 19:36"},
     ]);
 
-    interface Task {
+    interface TaskItem {
         name: string;
         date: string;
     }
 
-    const RenderKanbanItemList = ({task}: { task: Task }) => {
+    const RenderKanbanItemList = ({task}: { task: TaskItem }) => {
         const [displayTime, setDisplayTime] = useState(timeFormat(task.date));
         useEffect(() => {
             const timer = setInterval(() => {
                 setDisplayTime(timeFormat(task.date));
-            }, 1000*60);
+            }, 1000 * 60);
             return () => clearInterval(timer);
         }, [task.date]);
         return (
@@ -82,7 +82,7 @@ function App() {
             </div>)
     }
 
-    const RenderKanbanAddCard = ({onAdd}: { onAdd: (task: Task) => void }) => {
+    const RenderKanbanAddCard = ({onAdd}: { onAdd: (task: TaskItem) => void }) => {
         const [name, setName] = useState("");
         const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             setName(e.currentTarget.value);
@@ -93,6 +93,14 @@ function App() {
                 onAdd({name: name, date: new Date().toISOString().split("T")[0]});
             }
         };
+
+        //可变的ref
+        const inputRef = useRef<HTMLInputElement>(null);
+        //组件挂载阶段 []
+        useEffect(() => {
+            //输入框自动聚焦
+            inputRef.current?.focus();
+        }, []);
         return (
             <div className="kanban-item">
                 <input
@@ -100,6 +108,7 @@ function App() {
                     value={name}
                     className="kanban-item-input"
                     placeholder="输入任务名称"
+                    ref={inputRef}
                     onChange={handleOnChange}
                     onKeyDown={handleKeyDown}
                 />
@@ -110,15 +119,15 @@ function App() {
     const [showAddTodo, setShowAddTodo] = useState(false);
     const [showAddDoing, setShowAddDoing] = useState(false);
     const [showAddDone, setShowAddDone] = useState(false);
-    const handleAddTodoTask = (task: Task) => {
+    const handleAddTodoTask = (task: TaskItem) => {
         setTodoTasks([task, ...todoTasks]);
         setShowAddTodo(false);
     };
-    const handleAddDoingTask = (task: Task) => {
+    const handleAddDoingTask = (task: TaskItem) => {
         setDoingTasks([task, ...doingTasks]);
         setShowAddDoing(false);
     };
-    const handleAddDoneTask = (task: Task) => {
+    const handleAddDoneTask = (task: TaskItem) => {
         setDoneTasks([task, ...doneTasks]);
         setShowAddDone(false);
     };
@@ -129,24 +138,24 @@ function App() {
             <div className="app-main">
                 <RenderKanbanColumn title="待处理" className="kanban-todo" addTask={() => setShowAddTodo(true)}>
                     {showAddTodo && <RenderKanbanAddCard onAdd={handleAddTodoTask}/>}
-                    {todoTasks.map((task) => (
-                        <RenderKanbanItemList task={task}/>
+                    {todoTasks.map((task, index) => (
+                        <RenderKanbanItemList key={"todo-" + index} task={task}/>
                     ))}
                 </RenderKanbanColumn>
                 <RenderKanbanColumn title="进行中" className="kanban-doing" addTask={() => setShowAddDoing(true)}>
                     {showAddDoing && (
                         <RenderKanbanAddCard onAdd={handleAddDoingTask}/>
                     )}
-                    {doingTasks.map((task) => (
-                        <RenderKanbanItemList task={task}/>
+                    {doingTasks.map((task, index) => (
+                        <RenderKanbanItemList key={"doing-" + index} task={task}/>
                     ))}
                 </RenderKanbanColumn>
                 <RenderKanbanColumn title="已完成" className="kanban-done" addTask={() => setShowAddDone(true)}>
                     {showAddDone && (
                         <RenderKanbanAddCard onAdd={handleAddDoneTask}/>
                     )}
-                    {doneTasks.map((task) => (
-                        <RenderKanbanItemList task={task}/>
+                    {doneTasks.map((task, index) => (
+                        <RenderKanbanItemList key={"done-" + index} task={task}/>
                     ))}
                 </RenderKanbanColumn>
             </div>

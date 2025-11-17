@@ -124,3 +124,17 @@
   color: #666;
   text-align: right;
 }
+.kanban-item-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    color: #575757;
+    font-size: 1rem;
+    font-weight: bold;
+    &:focus {
+        outline: rgba(177, 177, 177, 0.5) solid 2px;
+    }
+}
