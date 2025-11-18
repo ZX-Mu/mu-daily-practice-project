@@ -22,21 +22,29 @@ const timeFormat = (date: string) => {
     return result
 }
 
+const STORAGE_KEY = "kanban-data"
+
 function App() {
-    const [todoTasks, setTodoTasks] = useState<TaskItem[]>([
-        {name: "任务一", date: "2025-11-12 20:10"},
-        {name: "任务二", date: "2025-11-11 18:00"},
-        {name: "任务三", date: "2025-11-10 19:00"},
-    ]);
-    const [doingTasks, setDoingTasks] = useState<TaskItem[]>([
-        {name: "任务四", date: "2025-10-30 12:00"},
-        {name: "任务五", date: "2025-11-05 18:00"},
-        {name: "任务六", date: "2025-11-11 19:00"},
-    ]);
-    const [doneTasks, setDoneTasks] = useState<TaskItem[]>([
-        {name: "任务七", date: "2025-09-07 14:23"},
-        {name: "任务八", date: "2025-10-09 19:36"},
-    ]);
+    const [todoTasks, setTodoTasks] = useState<TaskItem[]>([]);
+    const [doingTasks, setDoingTasks] = useState<TaskItem[]>([]);
+    const [doneTasks, setDoneTasks] = useState<TaskItem[]>([]);
+
+    const [isLoading, setIsLoading] = useState(false);
+    //组件挂载时，模拟异步获取数据
+    useEffect(() => {
+        setIsLoading(true);
+        const data = window.localStorage.getItem(STORAGE_KEY);
+        setTimeout(() => {
+            if (data) {
+                console.log("从本地获取数据:", data);
+                const {todoTasks, doingTasks, doneTasks} = JSON.parse(data);
+                setTodoTasks(todoTasks);
+                setDoingTasks(doingTasks);
+                setDoneTasks(doneTasks);
+                setIsLoading(false);
+            }
+        }, 1000)
+    }, []);
 
     interface TaskItem {
         name: string;
@@ -49,6 +57,7 @@ function App() {
             const timer = setInterval(() => {
                 setDisplayTime(timeFormat(task.date));
             }, 1000 * 60);
+            //返回清除函数，当task.date变化或组件卸载时，清除定时器
             return () => clearInterval(timer);
         }, [task.date]);
         return (
@@ -90,7 +99,7 @@ function App() {
         const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
             if (e.key === "Enter") {
                 console.log("添加任务:", e.currentTarget.value);
-                onAdd({name: name, date: new Date().toISOString().split("T")[0]});
+                onAdd({name: name, date: new Date().toLocaleString()});
             }
         };
 
@@ -132,9 +141,20 @@ function App() {
         setShowAddDone(false);
     };
 
+    const saveTasks = () => {
+        // 保存所有任务到本地存储
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            todoTasks,
+            doingTasks,
+            doneTasks
+        }));
+    }
     return (
         <div className="app">
-            <div className="app-header">我的看板</div>
+            <div className="app-header">
+                <span>{isLoading ? '正在加载...' : '我的看板'}</span>
+                <button className="app-header-save-btn" onClick={saveTasks}>保存所有任务</button>
+            </div>
             <div className="app-main">
                 <RenderKanbanColumn title="待处理" className="kanban-todo" addTask={() => setShowAddTodo(true)}>
                     {showAddTodo && <RenderKanbanAddCard onAdd={handleAddTodoTask}/>}
