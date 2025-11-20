@@ -1,6 +1,16 @@
 import "./App.css";
 import {useEffect, useRef, useState} from "react";
+import type {TaskType} from "./types";
 
+const TASK_TYPE_VALUES: Record<string, TaskType> = {
+    TODO: "todo",
+    DOING: "doing",
+    DONE: "done",
+};
+interface TaskItem {
+    name: string;
+    date: string;
+}
 
 const timeFormat = (date: string) => {
     const timeDiff = new Date().getTime() - new Date(date).getTime();
@@ -24,6 +34,99 @@ const timeFormat = (date: string) => {
 
 const STORAGE_KEY = "kanban-data"
 
+const RenderKanbanColumn = ({
+                                title,
+                                addTask,
+                                className,
+                                children,
+                                setDragSource,
+                                setDragTarget,
+                                type,
+                            }: {
+    title: string,
+    type: TaskType,
+    className: string,
+    addTask: () => void,
+    children: React.ReactNode,
+    setDragSource: (source: TaskType | null) => void
+    setDragTarget: (target: TaskType | null) => void
+}) => {
+    const handleDragStart = () => {
+        console.log(`开始从“${title}”拖拽任务`);
+        //记录拖拽开始的列
+        setDragSource(type)
+        //如果之前有拖拽目标，清除
+        setDragTarget(null)
+    }
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+
+    }
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        const taskName = e.dataTransfer.getData("text/plain");
+        console.log(`将任务（${taskName}）拖拽到了“${title}”`);
+        setDragTarget(type)
+    }
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'none';
+        console.log(`离开了区域“${title}”`);
+    }
+    const handleDragEnd = () => {
+        console.log(`拖拽任务在“${title}”结束`);
+    }
+    return (
+        <div className={`app-main-kanban ${className}`} onDragStart={handleDragStart} onDragOver={handleDragOver}
+             onDrop={handleDrop} onDragLeave={handleDragLeave} onDragEnd={handleDragEnd}>
+            <div className="kanban-title">
+                <span>{title}</span>
+                <button
+                    className="kanban-add-btn"
+                    onClick={addTask}
+                >
+                    添加任务
+                </button>
+            </div>
+            <div className="kanban-item-list">
+                {children}
+            </div>
+        </div>)
+}
+
+const RenderKanbanItemList = ({task, setDraggedItem}: {
+    task: TaskItem,
+    setDraggedItem: (task: TaskItem | null) => void
+}) => {
+    const [displayTime, setDisplayTime] = useState(timeFormat(task.date));
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setDisplayTime(timeFormat(task.date));
+        }, 1000 * 60);
+        //返回清除函数，当task.date变化或组件卸载时，清除定时器
+        return () => clearInterval(timer);
+    }, [task.date]);
+    //拖拽
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+        console.log(`开始拖拽任务${task.name}`, e);
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", task.name);
+        setDraggedItem(task);
+    }
+    const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+        console.log(`任务${task.name}拖拽结束`, e);
+        e.dataTransfer.clearData();
+    }
+    return (
+        <div key={task.name} className="kanban-item" draggable onDragStart={handleDragStart}
+             onDragEnd={handleDragEnd}>
+            <div className="kanban-item-name">{task.name}</div>
+            <div className="kanban-item-date">{displayTime}</div>
+        </div>
+    )
+};
+
 function App() {
     const [todoTasks, setTodoTasks] = useState<TaskItem[]>([]);
     const [doingTasks, setDoingTasks] = useState<TaskItem[]>([]);
@@ -46,50 +149,30 @@ function App() {
         }, 1000)
     }, []);
 
-    interface TaskItem {
-        name: string;
-        date: string;
-    }
+    //拖拽记录
+    const [draggedItem, setDraggedItem] = useState<TaskItem | null>(null);
+    const [dragSource, setDragSource] = useState<TaskType | null>(null);
+    const [dragTarget, setDragTarget] = useState<TaskType | null>(null);
+    //拖拽结束后操作数据移动
+    useEffect(() => {
+        if (!draggedItem || !dragSource || !dragTarget) {
+            return;
+        }
+        if (dragSource === dragTarget) {
+            console.log("拖拽目标与源相同，不处理");
+            return;
+        }
+        const updateMap = {
+            [TASK_TYPE_VALUES.TODO]: setTodoTasks,
+            [TASK_TYPE_VALUES.DOING]: setDoingTasks,
+            [TASK_TYPE_VALUES.DONE]: setDoneTasks,
+        }
+        //源数据移除
+        updateMap[dragSource]((tasks: TaskItem[]) => tasks.filter((task) => !Object.is(task, draggedItem)));
+        //目标数据添加
+        updateMap[dragTarget]((tasks: TaskItem[]) => [...tasks, draggedItem]);
+    }, [dragTarget])
 
-    const RenderKanbanItemList = ({task}: { task: TaskItem }) => {
-        const [displayTime, setDisplayTime] = useState(timeFormat(task.date));
-        useEffect(() => {
-            const timer = setInterval(() => {
-                setDisplayTime(timeFormat(task.date));
-            }, 1000 * 60);
-            //返回清除函数，当task.date变化或组件卸载时，清除定时器
-            return () => clearInterval(timer);
-        }, [task.date]);
-        return (
-            <div key={task.name} className="kanban-item">
-                <div className="kanban-item-name">{task.name}</div>
-                <div className="kanban-item-date">{displayTime}</div>
-            </div>
-        )
-    };
-
-    const RenderKanbanColumn = ({title, addTask, className, children}: {
-        title: string,
-        className: string,
-        addTask: () => void,
-        children: React.ReactNode
-    }) => {
-        return (
-            <div className={`app-main-kanban ${className}`}>
-                <div className="kanban-title">
-                    <span>{title}</span>
-                    <button
-                        className="kanban-add-btn"
-                        onClick={addTask}
-                    >
-                        添加任务
-                    </button>
-                </div>
-                <div className="kanban-item-list">
-                    {children}
-                </div>
-            </div>)
-    }
 
     const RenderKanbanAddCard = ({onAdd}: { onAdd: (task: TaskItem) => void }) => {
         const [name, setName] = useState("");
@@ -156,26 +239,32 @@ function App() {
                 <button className="app-header-save-btn" onClick={saveTasks}>保存所有任务</button>
             </div>
             <div className="app-main">
-                <RenderKanbanColumn title="待处理" className="kanban-todo" addTask={() => setShowAddTodo(true)}>
+                <RenderKanbanColumn title="待处理" type={TASK_TYPE_VALUES.TODO} setDragSource={setDragSource}
+                                    setDragTarget={setDragTarget}
+                                    className="kanban-todo" addTask={() => setShowAddTodo(true)}>
                     {showAddTodo && <RenderKanbanAddCard onAdd={handleAddTodoTask}/>}
                     {todoTasks.map((task, index) => (
-                        <RenderKanbanItemList key={"todo-" + index} task={task}/>
+                        <RenderKanbanItemList key={"todo-" + index} task={task} setDraggedItem={setDraggedItem}/>
                     ))}
                 </RenderKanbanColumn>
-                <RenderKanbanColumn title="进行中" className="kanban-doing" addTask={() => setShowAddDoing(true)}>
+                <RenderKanbanColumn title="进行中" type={TASK_TYPE_VALUES.DOING} setDragSource={setDragSource}
+                                    setDragTarget={setDragTarget}
+                                    className="kanban-doing" addTask={() => setShowAddDoing(true)}>
                     {showAddDoing && (
                         <RenderKanbanAddCard onAdd={handleAddDoingTask}/>
                     )}
                     {doingTasks.map((task, index) => (
-                        <RenderKanbanItemList key={"doing-" + index} task={task}/>
+                        <RenderKanbanItemList key={"doing-" + index} task={task} setDraggedItem={setDraggedItem}/>
                     ))}
                 </RenderKanbanColumn>
-                <RenderKanbanColumn title="已完成" className="kanban-done" addTask={() => setShowAddDone(true)}>
+                <RenderKanbanColumn title="已完成" type={TASK_TYPE_VALUES.DONE} setDragSource={setDragSource}
+                                    setDragTarget={setDragTarget}
+                                    className="kanban-done" addTask={() => setShowAddDone(true)}>
                     {showAddDone && (
                         <RenderKanbanAddCard onAdd={handleAddDoneTask}/>
                     )}
                     {doneTasks.map((task, index) => (
-                        <RenderKanbanItemList key={"done-" + index} task={task}/>
+                        <RenderKanbanItemList key={"done-" + index} task={task} setDraggedItem={setDraggedItem}/>
                     ))}
                 </RenderKanbanColumn>
             </div>
