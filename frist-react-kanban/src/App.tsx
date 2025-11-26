@@ -2,6 +2,7 @@ import "./App.css";
 import {useEffect, useState} from "react";
 import type {TaskItem} from "./types";
 import {KanbanMain} from "./KanbanMain.tsx";
+import {ManageContext} from "./context/manage.ts";
 
 const STORAGE_KEY = "kanban-data"
 
@@ -37,15 +38,28 @@ function App() {
             doneTasks
         }));
     }
+
+    const [isManageMode, setIsManageMode] = useState(false);
+    const handleManageChange = () => {
+        setIsManageMode(!isManageMode);
+    }
     return (
         <div className="app">
             <div className="app-header">
                 <span>{isLoading ? '正在加载...' : '我的看板'}</span>
-                <button className="app-header-save-btn" onClick={saveTasks}>保存所有任务</button>
+                <div className="app-header-right">
+                    <label>
+                        管理模式：
+                        <input type="checkbox" onChange={handleManageChange} checked={isManageMode} />
+                    </label>
+                    <button className="app-header-save-btn" onClick={saveTasks}>保存所有任务</button>
+                </div>
             </div>
-            <KanbanMain todoTasks={todoTasks} doingTasks={doingTasks} doneTasks={doneTasks}
-                        setTodoTasks={setTodoTasks} setDoingTasks={setDoingTasks}
-                        setDoneTasks={setDoneTasks}/>
+            <ManageContext.Provider value={{enabled: isManageMode}}>
+                <KanbanMain todoTasks={todoTasks} doingTasks={doingTasks} doneTasks={doneTasks}
+                            setTodoTasks={setTodoTasks} setDoingTasks={setDoingTasks}
+                            setDoneTasks={setDoneTasks}/>
+            </ManageContext.Provider>
         </div>
     );
 }

@@ -1,5 +1,6 @@
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import type {TaskItem} from "./types";
+import {ManageContext} from "./context/manage.ts";
 
 // 时间格式化
 const timeFormat = (date: string) => {
@@ -23,8 +24,9 @@ const timeFormat = (date: string) => {
 }
 
 //任务卡片
-export const KanbanItemCard = ({task, setDraggedItem}: {
+export const KanbanItemCard = ({task, setDraggedItem, delTask}: {
     task: TaskItem,
+    delTask: (task: TaskItem) => void,
     setDraggedItem: (task: TaskItem | null) => void
 }) => {
     const [displayTime, setDisplayTime] = useState(timeFormat(task.date));
@@ -47,10 +49,17 @@ export const KanbanItemCard = ({task, setDraggedItem}: {
         console.log(`任务${task.name}拖拽结束`, e);
         e.dataTransfer.clearData();
     }
+
+    //管理模式下，显示删除按钮(context)
+    const {enabled} = React.useContext(ManageContext);
+
     return (
         <div key={task.name} className="kanban-item" draggable onDragStart={handleDragStart}
              onDragEnd={handleDragEnd}>
-            <div className="kanban-item-name">{task.name}</div>
+            <div className="kanban-item-title">
+                <div className="kanban-item-name">{task.name}</div>
+                {enabled && <div className="kanban-item-delete" onClick={() => delTask(task)}>删除</div>}
+            </div>
             <div className="kanban-item-date">{displayTime}</div>
         </div>
     )

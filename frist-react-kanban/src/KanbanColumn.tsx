@@ -9,6 +9,7 @@ export const KanbanColumn = ({
                                  title,
                                  list,
                                  addTask,
+                                 delTask,
                                  className,
                                  setDragSource,
                                  setDragTarget,
@@ -20,6 +21,7 @@ export const KanbanColumn = ({
     list: TaskItem[],
     className: string,
     addTask: (type: TaskType, task: TaskItem) => void,
+    delTask: (type: TaskType, task: TaskItem) => void,
     setDraggedItem: (item: TaskItem | null) => void
     setDragSource: (source: TaskType | null) => void
     setDragTarget: (target: TaskType | null) => void
@@ -29,6 +31,10 @@ export const KanbanColumn = ({
     const handleAddTask = (task: TaskItem) => {
         addTask(type, task);
         setShowAdd(false);
+    }
+    //删除
+    const handleDelTask = (task: TaskItem) => {
+        delTask(type, task);
     }
 
     //拖拽
@@ -74,7 +80,7 @@ export const KanbanColumn = ({
             <div className="kanban-item-list">
                 {showAdd && <KanbanAddCard onAdd={handleAddTask}/>}
                 {list.map((task) => (
-                    <KanbanItemCard key={task.id} task={task} setDraggedItem={setDraggedItem}/>
+                    <KanbanItemCard key={task.id} task={task} setDraggedItem={setDraggedItem} delTask={handleDelTask}/>
                 ))}
             </div>
         </div>)

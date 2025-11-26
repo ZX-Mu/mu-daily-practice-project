@@ -52,10 +52,16 @@
     position: relative;
 }
 
-.app-header-save-btn {
+.app-header-right {
     position: absolute;
     top: 0.75rem;
     right: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+.app-header-save-btn {
+
     padding: 0.5rem;
     border: none;
     border-radius: 0.5rem;
@@ -79,6 +85,7 @@
     background-color: #333;
     border-radius: 1rem;
     padding: 1rem;
+    min-width: 0; /*内部文本溢出也不撑开父元素*/
 }
 
 .kanban-todo {
@@ -134,12 +141,28 @@
     background-color: #ffffff42;
     color: #333;
 }
-
+.kanban-item-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    height: 3rem;
+}
 .kanban-item-name {
     font-size: 1rem;
     font-weight: bold;
     text-align: left;
-    height: 3rem;
+    line-clamp: 1;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.kanban-item-delete {
+    font-size: 0.8rem;
+    line-height: 1.5rem;
+    color: #ff5959;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
 .kanban-item-date {
