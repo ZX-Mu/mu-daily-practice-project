@@ -23,12 +23,14 @@ const timeFormat = (date: string) => {
     return result
 }
 
-//任务卡片
-export const KanbanItemCard = ({task, setDraggedItem, delTask}: {
+interface KanbanItemCardProps {
     task: TaskItem,
     delTask: (task: TaskItem) => void,
     setDraggedItem: (task: TaskItem | null) => void
-}) => {
+}
+
+//任务卡片
+export const KanbanItemCard: React.FC<KanbanItemCardProps> = ({task, setDraggedItem, delTask}) => {
     const [displayTime, setDisplayTime] = useState(timeFormat(task.date));
     useEffect(() => {
         const timer = setInterval(() => {

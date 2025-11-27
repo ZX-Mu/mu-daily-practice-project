@@ -8,14 +8,16 @@ const TASK_TYPE_VALUES: Record<string, TaskType> = {
     DOING: "doing",
     DONE: "done",
 };
-export const KanbanMain = ({todoTasks, doingTasks, doneTasks, setTodoTasks, setDoingTasks, setDoneTasks}: {
+
+interface KanbanMainProps {
     todoTasks: TaskItem[],
     doingTasks: TaskItem[],
     doneTasks: TaskItem[],
     setTodoTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>,
     setDoingTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>,
     setDoneTasks: React.Dispatch<React.SetStateAction<TaskItem[]>>
-}) => {
+}
+export const KanbanMain: React.FC<KanbanMainProps> = ({todoTasks, doingTasks, doneTasks, setTodoTasks, setDoingTasks, setDoneTasks}) => {
     //拖拽记录
     const [draggedItem, setDraggedItem] = useState<TaskItem | null>(null);
     const [dragSource, setDragSource] = useState<TaskType | null>(null);

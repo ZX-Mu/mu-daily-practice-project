@@ -4,28 +4,20 @@ import {KanbanItemCard} from "./KanbanItemCard.tsx";
 import * as React from "react";
 import {useState} from "react";
 
-//看板列
-export const KanbanColumn = ({
-                                 title,
-                                 list,
-                                 addTask,
-                                 delTask,
-                                 className,
-                                 setDragSource,
-                                 setDragTarget,
-                                 setDraggedItem,
-                                 type,
-                             }: {
+interface KanbanColumnProps {
     title: string,
     type: TaskType,
-    list: TaskItem[],
-    className: string,
-    addTask: (type: TaskType, task: TaskItem) => void,
-    delTask: (type: TaskType, task: TaskItem) => void,
-    setDraggedItem: (item: TaskItem | null) => void
-    setDragSource: (source: TaskType | null) => void
-    setDragTarget: (target: TaskType | null) => void
-}) => {
+    list: TaskItem[], //任务列表
+    className: string, //列的样式
+    addTask: (type: TaskType, task: TaskItem) => void, //添加任务
+    delTask: (type: TaskType, task: TaskItem) => void, //删除任务
+    setDraggedItem: (item: TaskItem | null) => void, //拖拽的任务
+    setDragSource: (source: TaskType | null) => void, //拖拽的源
+    setDragTarget: (target: TaskType | null) => void, //拖拽的目标
+}
+
+//看板列
+export const KanbanColumn: React.FC<KanbanColumnProps> = ({title, list, addTask, delTask, className, setDragSource, setDragTarget, setDraggedItem, type}) => {
     //添加按钮
     const [showAdd, setShowAdd] = useState(false);
     const handleAddTask = (task: TaskItem) => {
